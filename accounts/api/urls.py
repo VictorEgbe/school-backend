@@ -6,7 +6,8 @@ from .views import (
     profile,
     update_user,
     delete_user,
-    get_all_users
+    get_all_users,
+    change_user_password
 
 )
 
@@ -19,4 +20,5 @@ urlpatterns = [
     path('update_user/<int:user_id>', update_user),
     path('delete_user/<int:user_id>', delete_user),
     path('all_users', get_all_users),
+    path('change_user_password/<int:user_id>', change_user_password),
 ]

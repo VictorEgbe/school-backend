@@ -75,3 +75,8 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             'email',
             'image'
         ]
+
+
+class UserChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        style={'input_type': 'password'}, write_only=True)

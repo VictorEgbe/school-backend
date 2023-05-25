@@ -9,7 +9,34 @@ from knox.auth import TokenAuthentication
 from knox.models import AuthToken
 
 from ..models import User
-from .serializers import SignUpSerializer, SignInSerializer, UpdateUserSerializer
+from .serializers import (
+    SignUpSerializer,
+    SignInSerializer,
+    UpdateUserSerializer,
+    UserChangePasswordSerializer
+)
+
+
+@api_view(http_method_names=['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def change_user_password(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if (request.user.pk == user.pk) or (request.user.is_staff):
+        serializer = UserChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user.set_password(serializer.validated_data.get('password'))
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        msg = 'You are not authorized to take that action.'
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(http_method_names=['PUT'])
