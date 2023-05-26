@@ -85,7 +85,6 @@ def sign_up(request):
     serializer = SignUpSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        print(user.phone)
         login(request=request, user=user)
         instance, token = AuthToken.objects.create(user=user)
         response_data = {

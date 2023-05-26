@@ -20,10 +20,11 @@ class SignUpSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'gender',
-            'email'
+            'email',
+            'image'
         ]
-        extra_kwargs = {'password': {'write_only': True},
-                        'style': {'input_type': 'password'}}
+        extra_kwargs = {'password': {'write_only': True}, 'style': {
+            'input_type': 'password'}, 'trim_whitespace': False}
 
     def validate_password(self, password):
         password2 = self.initial_data.get('password2')
@@ -40,6 +41,10 @@ class SignUpSerializer(serializers.ModelSerializer):
         user.gender = self.validated_data.get('gender')
         user.email = self.validated_data.get('email')
         user.phone = self.validated_data.get('phone')
+
+        if self.validated_data.get('image'):
+            user.image = self.validated_data.get('image')
+
         user.set_password(password)
         user.save()
         return user
