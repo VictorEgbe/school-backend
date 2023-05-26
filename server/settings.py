@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "phonenumber_field",
     'knox',
     'accounts.apps.AccountsConfig',
+    'years.apps.YearsConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
