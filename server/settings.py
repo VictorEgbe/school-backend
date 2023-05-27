@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'knox',
     'accounts.apps.AccountsConfig',
     'years.apps.YearsConfig',
+    'terms.apps.TermsConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
