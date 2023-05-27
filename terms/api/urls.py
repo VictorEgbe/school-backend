@@ -15,5 +15,5 @@ urlpatterns = [
     path('deactivate_term/<int:term_id>', deactivate_term),
     path('delete_term/<int:term_id>', delete_term),
     path('get_term/<int:term_id>', get_term),
-    path('update_term/<int:term_id>/<int:year_id>', update_term),
+    path('update_term/<int:term_id>/<int:new_year_id>', update_term),
 ]

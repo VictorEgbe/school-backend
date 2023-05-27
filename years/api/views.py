@@ -10,13 +10,16 @@ from rest_framework.decorators import (
 from knox.auth import TokenAuthentication
 
 from ..models import Year
-from .serializers import CreateYearSerializer
+from .serializers import CreateYearSerializer, GetYearSerializer
 
 
 @api_view(http_method_names=['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def create_year(request):
+    if Year.objects.filter(is_active=True).exists():
+        msg = f"You can't create a new academic year while another is still active."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
     serializer = CreateYearSerializer(data=request.data)
     if serializer.is_valid():
         year = serializer.save()
@@ -35,7 +38,9 @@ def get_year(request, year_id):
         msg = 'Academic year not found'
         return Response({'Error': msg}, status=status.HTTP_404_NOT_FOUND)
 
-    return Response(year.get_response_data, status=status.HTTP_200_OK)
+    serializer = GetYearSerializer(year)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['PUT'])
@@ -47,6 +52,10 @@ def update_year(request, year_id):
     except Year.DoesNotExist:
         msg = 'Academic year not found'
         return Response({'Error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    if not year.is_active:
+        msg = f"You can't update an inactive year."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
 
     serializer = CreateYearSerializer(year, data=request.data)
     if serializer.is_valid():
@@ -66,6 +75,10 @@ def delete_year(request, year_id):
         msg = 'Academic year not found'
         return Response({'Error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    if year.is_active:
+        msg = f"You can't delete an academic year while it's active."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+
     year.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -75,7 +88,8 @@ def delete_year(request, year_id):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def get_years(request):
     years = Year.objects.all()
-    return Response([year.get_response_data for year in years])
+    serializer = GetYearSerializer(years, many=True)
+    return Response(serializer.data)
 
 
 @api_view(http_method_names=['PUT'])
@@ -88,7 +102,11 @@ def deactivate_year(request, year_id):
         msg = 'Academic year not found'
         return Response({'Error': msg}, status=status.HTTP_404_NOT_FOUND)
 
-    year.is_active = False
-    year.save()
+    if not year.is_active:
+        msg = f"You can't deactivate an inactive year."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        year.is_active = False
+        year.save()
 
-    return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)

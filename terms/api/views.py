@@ -22,6 +22,15 @@ from .serializers import (
 @permission_classes([IsAuthenticated, IsAdminUser])
 @authentication_classes([TokenAuthentication])
 def create_term(request, year_id):
+
+    if Term.objects.filter(is_active=True).exists():
+        msg = f"You can't create a new term while another is still active."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if Term.objects.filter(is_active=True).exists():
+        msg = f"You can't create a new term while another one is active."
+        return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         year = Year.objects.get(pk=year_id)
     except Year.DoesNotExist:
@@ -32,7 +41,8 @@ def create_term(request, year_id):
     if serializer.is_valid():
         term = serializer.save(year=year)
         return Response(term.get_response_data(), status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(http_method_names=['GET'])
@@ -60,15 +70,19 @@ def get_terms(request):
 @api_view(http_method_names=['PUT'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 @authentication_classes([TokenAuthentication])
-def update_term(request, term_id, year_id):
+def update_term(request, term_id, new_year_id):
     try:
         term = Term.objects.get(pk=term_id)
     except Term.DoesNotExist:
         msg = "Term not found. You can't update an unknown term."
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    if not term.is_active:
+        msg = f"You can't update an inactive term."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+
     try:
-        year = Year.objects.get(pk=year_id)
+        year = Year.objects.get(pk=new_year_id)
     except Year.DoesNotExist:
         msg = "Year not found. You can't assign a term to an unknown year."
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
@@ -100,6 +114,10 @@ def delete_term(request, term_id):
         msg = "Term not found."
         return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
+    if term.is_active:
+        msg = f"You can't delete a term while it's active."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+
     term.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -114,6 +132,10 @@ def deactivate_term(request, term_id):
         msg = "Term not found."
         return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    term.is_active = False
-    term.save()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    if not term.is_active:
+        msg = f"You can't deactivate an inactive term."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        term.is_active = False
+        term.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
