@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'years.apps.YearsConfig',
     'terms.apps.TermsConfig',
     'classes.apps.ClassesConfig',
+    'sequences.apps.SequencesConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
