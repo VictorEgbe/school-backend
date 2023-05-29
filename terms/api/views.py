@@ -27,10 +27,6 @@ def create_term(request, year_id):
         msg = f"You can't create a new term while another is still active."
         return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if Term.objects.filter(is_active=True).exists():
-        msg = f"You can't create a new term while another one is active."
-        return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
         year = Year.objects.get(pk=year_id)
     except Year.DoesNotExist:
@@ -87,13 +83,17 @@ def update_term(request, term_id, new_year_id):
         msg = "Year not found. You can't assign a term to an unknown year."
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    if not year.is_active:
+        msg = f"You can't update a term for an inactive year."
+        return Response({'error': msg}, status=status.HTTP_401_UNAUTHORIZED)
+
     serializer = UpdateTermSerializer(data=request.data)
 
     if serializer.is_valid():
         name = serializer.validated_data['name']
         if Term.objects.filter(name=name, year=year).exists():
             msg = f'{name} already exists for the year {year.name}'
-            return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
             term.name = name
             term.year = year
