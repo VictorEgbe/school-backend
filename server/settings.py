@@ -31,11 +31,17 @@ INSTALLED_APPS = [
     'rest_framework',
     "phonenumber_field",
     'knox',
+
     'accounts.apps.AccountsConfig',
     'years.apps.YearsConfig',
     'terms.apps.TermsConfig',
     'classes.apps.ClassesConfig',
     'sequences.apps.SequencesConfig',
+    'students.apps.StudentsConfig',
+    'marks.apps.MarksConfig',
+    'subjects.apps.SubjectsConfig',
+    'departments.apps.DepartmentsConfig',
+    'teachers.apps.TeachersConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
