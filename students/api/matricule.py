@@ -3,7 +3,7 @@ from random import randrange
 
 def generate_student_id(queryset):
     while True:
-        school = "QIS"
+        school = "QIS"  # Change depending on the school
         random_int = randrange(0, 9999)
 
         if random_int < 10:
@@ -17,7 +17,7 @@ def generate_student_id(queryset):
 
         id = school + string
 
-        ids = [student.id for student in queryset.objects.all()]
+        ids = [student.student_id for student in queryset]
 
         if id in ids:
             continue
