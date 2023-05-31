@@ -33,7 +33,6 @@ def create_student(request, class_id):
     if serializer.is_valid():
         print('ok')
         student_id = generate_student_id(Student.objects.all())
-        # student = serializer.save(student_class=student_class, student_id=student_id)
         student = Student(**serializer.validated_data)
         student.student_class = student_class
         student.student_id = student_id
@@ -46,32 +45,101 @@ def create_student(request, class_id):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAdminUser, IsAuthenticated])
 def get_all_students_in_class(request, class_id):
-    pass
+    try:
+        c = Class.objects.get(pk=class_id)
+    except Class.DoesNotExist:
+        msg = f'Class not found.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = GetStudentSerializer(c.student_set.all(), many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAdminUser, IsAuthenticated])
-def get_student(request, student_id, class_id):
-    pass
+def get_student(request, student_id):
+    try:
+        student = Student.objects.get(student_id=student_id)
+    except Student.DoesNotExist:
+        msg = f'Student not found'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = GetStudentSerializer(student)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAdminUser, IsAuthenticated])
 def get_all_students_in_school(request):
-    pass
+    students = Student.objects.filter(student_class__year__is_active=True)
+    serializer = GetStudentSerializer(students, many=True)
+    data = {
+        'count': students.count(),
+        'students': serializer.data
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAdminUser, IsAuthenticated])
 def delete_student(request, student_id):
-    pass
+    try:
+        student = Student.objects.get(student_id=student_id)
+    except Student.DoesNotExist:
+        msg = f'Student not found'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    if not student.student_class.year.is_active:
+        msg = 'You can only delete students from the current academic year'
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    else:
+        student.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(http_method_names=['UPDATE'])
+@api_view(http_method_names=['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAdminUser, IsAuthenticated])
 def update_student(request, student_id, new_class_id):
-    pass
+    try:
+        student = Student.objects.get(student_id=student_id)
+    except Student.DoesNotExist:
+        msg = f'Student not found'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        c = Class.objects.get(pk=new_class_id)
+    except Class.DoesNotExist:
+        msg = f'Class not found'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    if not c.year.is_active:
+        msg = 'You can only edit students in the current academic year.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        serializer = CreateStudentSerializer(student, data=request.data)
+        if serializer.is_valid():
+            student = serializer.save(student_class=c)
+            response_serializer = GetStudentSerializer(student)
+            return Response(response_serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
+@api_view(http_method_names=['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAdminUser, IsAuthenticated])
+def get_classes_students_stats(request):
+    classes_stats = []
+    for c in Class.objects.filter(year__is_active=True):
+        classes_stats.append(
+            {
+                'class': c.name,
+                'Boys': c.student_set.filter(gender='Male').count(),
+                'Girls': c.student_set.filter(gender='Female').count()
+            }
+        )
+
+    return Response(classes_stats, status=status.HTTP_200_OK)
