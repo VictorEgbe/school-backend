@@ -85,3 +85,12 @@ class UpdateUserSerializer(serializers.ModelSerializer):
 class UserChangePasswordSerializer(serializers.Serializer):
     password = serializers.CharField(
         style={'input_type': 'password'}, write_only=True)
+    password_confirm = serializers.CharField(
+        style={'input_type': 'password'}, write_only=True)
+
+    def validate_password(self, password):
+        password_confirm = self.initial_data.get('password_confirm')
+        if not password == password_confirm:
+            msg = 'Passwords must match'
+            raise serializers.ValidationError(msg)
+        return password

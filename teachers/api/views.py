@@ -12,7 +12,9 @@ from departments.models import Department
 
 from .serializers import (
     GetTeacherSerializer,
-    CreateTeacherSerializer
+    CreateTeacherSerializer,
+    UpdateTeacherSerializer,
+    TeacherChangePasswordSerializer
 )
 from ..models import Teacher
 
@@ -74,18 +76,71 @@ def get_all_teachers(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def get_teacher(request, teacher_id):
-    pass
+    try:
+        teacher = Teacher.objects.get(pk=teacher_id)
+    except Teacher.DoesNotExist:
+        msg = 'Teacher not found.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = GetTeacherSerializer(teacher)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def delete_teacher(request, teacher_id):
-    pass
+    try:
+        teacher = Teacher.objects.get(pk=teacher_id)
+    except Teacher.DoesNotExist:
+        msg = 'Teacher not found.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    teacher.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(http_method_names=['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def update_teacher(request, teacher_id, department_id):
-    pass
+def update_teacher(request, teacher_id, new_department_id):
+    try:
+        teacher = Teacher.objects.get(pk=teacher_id)
+    except Teacher.DoesNotExist:
+        msg = 'Teacher not found.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        new_department = Department.objects.get(pk=new_department_id)
+    except Department.DoesNotExist:
+        msg = 'Department not found'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UpdateTeacherSerializer(teacher, data=request.data)
+
+    if serializer.is_valid():
+        updated_teacher = serializer.save(department=new_department)
+        return Response(GetTeacherSerializer(updated_teacher).data)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(http_method_names=['PUT'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def teacher_password_change(request, teacher_id):
+    try:
+        teacher = Teacher.objects.get(pk=teacher_id)
+    except Teacher.DoesNotExist:
+        msg = 'Teacher not found.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TeacherChangePasswordSerializer(data=request.data)
+
+    if serializer.is_valid():
+        password = serializer.validated_data.get('password')
+        teacher.set_password(password)
+        teacher.save()
+        return Response(GetTeacherSerializer(teacher).data)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

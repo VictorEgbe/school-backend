@@ -57,3 +57,34 @@ class CreateTeacherSerializer(serializers.ModelSerializer):
             msg = 'Passwords must match.'
             raise serializers.ValidationError(msg, code='authorization')
         return password2
+
+
+class UpdateTeacherSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Teacher
+        fields = [
+            'phone',
+            'username',
+            'first_name',
+            'last_name',
+            'gender',
+            'email',
+            'image',
+            'address',
+            'date_of_birth'
+        ]
+
+
+class TeacherChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        style={'input_type': 'password'}, write_only=True)
+    password_confirm = serializers.CharField(
+        style={'input_type': 'password'}, write_only=True)
+
+    def validate_password(self, password):
+        password_confirm = self.initial_data.get('password_confirm')
+        if not password == password_confirm:
+            msg = 'Passwords must match'
+            raise serializers.ValidationError(msg)
+        return password
