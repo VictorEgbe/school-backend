@@ -17,6 +17,8 @@ class Teacher(User):
         return f'{self.get_full_name()}'
 
     def get_age(self):
-        year_of_birth = self.date_of_birth.year
-        current_year = date.today().year
-        return current_year - year_of_birth
+        if self.date_of_birth:
+            year_of_birth = self.date_of_birth.year
+            current_year = date.today().year
+            return current_year - year_of_birth
+        return None
