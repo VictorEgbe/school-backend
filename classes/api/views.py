@@ -106,7 +106,7 @@ def update_class(request, class_id, new_year_id):
     if serializer.is_valid():
         name = serializer.validated_data['name']
         theme = serializer.validated_data.get('theme')
-        if Class.objects.filter(name=name, year=new_year).exists():
+        if Class.objects.filter(name=name, year=new_year, theme=theme).exists():
             msg = f'{name} already exists for the year {new_year.name}.'
             return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:

@@ -44,7 +44,7 @@ class Student(models.Model):
             'date_of_birth': self.date_of_birth,
             'gender': self.gender,
             'image': self.image.url if self.image else None,
-            'student_phone': self.student_phone.as_national,
+            'student_phone': self.student_phone.as_national if self.student_phone else None,
             'parent_name': self.parent_name,
             'parent_phone': self.parent_phone.as_national,
             'created_at': self.created_at,

@@ -134,11 +134,14 @@ def update_student(request, student_id, new_class_id):
 def get_classes_students_stats(request):
     classes_stats = []
     for c in Class.objects.filter(year__is_active=True):
+        number_of_boys = c.student_set.filter(gender='Male').count()
+        number_of_girls = c.student_set.filter(gender='Female').count()
         classes_stats.append(
             {
                 'class': c.name,
-                'Boys': c.student_set.filter(gender='Male').count(),
-                'Girls': c.student_set.filter(gender='Female').count()
+                'Boys': number_of_boys,
+                'Girls': number_of_girls,
+                'total': number_of_boys + number_of_girls
             }
         )
 

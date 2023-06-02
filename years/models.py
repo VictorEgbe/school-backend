@@ -22,5 +22,8 @@ class Year(models.Model):
             'is_active': self.is_active
         }
 
+    class Meta:
+        ordering = ['-pk']
+
 # TODO: Add start date and end date of the year
 # TODO: Also, add start year and end year then generate the name using signals
