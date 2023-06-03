@@ -78,6 +78,10 @@ def create_subject_in_class(request, class_id, teacher_id):
         msg = 'Teacher not found.'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    if not class_obj.year.is_active:
+        msg = 'You can only create a subject in the current active year'
+        return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
+
     serializer = CreateSubjectSerializer(data=request.data)
     if serializer.is_valid():
         subject = serializer.save(teachers=[teacher], subject_class=class_obj)
@@ -135,6 +139,10 @@ def add_teacher_to_subject(request, subject_id, teacher_id):
         msg = 'Subject not Found.'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    if not subject.subject_class.year.is_active:
+        msg = "You can only add a teacher in a subject from the current active year"
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
     try:
         teacher = Teacher.objects.get(pk=teacher_id)
     except Teacher.DoesNotExist:
@@ -156,6 +164,10 @@ def remove_teacher_to_subject(request, subject_id, teacher_id):
     except Subject.DoesNotExist:
         msg = 'Subject not Found.'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    if not subject.subject_class.year.is_active:
+        msg = "You can only remove a teacher in a subject from the current active year"
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     try:
         teacher = Teacher.objects.get(pk=teacher_id)
