@@ -12,7 +12,7 @@ GENDER = (
 
 
 def upload_location(instance, filename):
-    return f'students/{instance.get_full_name()}/{filename}'
+    return f'students/{instance.name}/{filename}'
 
 
 class Student(models.Model):
@@ -51,6 +51,3 @@ class Student(models.Model):
             'updated_at': self.updated_at,
             'age': self.get_age(),
         }
-
-    def get_full_name(self):
-        return self.name

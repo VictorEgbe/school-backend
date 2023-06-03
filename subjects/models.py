@@ -13,7 +13,7 @@ COEFFICIENT = (
 
 
 class Subject(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     teachers = models.ManyToManyField(Teacher)
     coefficient = models.PositiveSmallIntegerField(
         choices=COEFFICIENT, validators=[MinValueValidator(1), MaxValueValidator(5)])
