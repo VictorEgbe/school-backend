@@ -23,4 +23,5 @@ class Subject(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        class_name = self.subject_class.name
+        return f'{self.name} ({class_name})'
