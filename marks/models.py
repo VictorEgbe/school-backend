@@ -4,6 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from teachers.models import Teacher
 from students.models import Student
 from subjects.models import Subject
+from sequences.models import Sequence
 
 
 class Mark(models.Model):
@@ -12,6 +13,7 @@ class Mark(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
     is_filled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

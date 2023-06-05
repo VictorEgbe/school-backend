@@ -12,10 +12,14 @@ class CreateSequenceSerializer(serializers.ModelSerializer):
 
 class GetSequenceSerializer(serializers.ModelSerializer):
 
-    sequence_class = serializers.SerializerMethodField()
+    term = serializers.SerializerMethodField()
+    year = serializers.SerializerMethodField()
 
-    def get_sequence_class(self, sequence):
-        return sequence.sequence_class.name
+    def get_term(self, sequence):
+        return sequence.term.name
+
+    def get_year(self, sequence):
+        return sequence.term.year.name
 
     class Meta:
         model = Sequence

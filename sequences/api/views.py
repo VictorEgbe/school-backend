@@ -8,8 +8,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from knox.auth import TokenAuthentication
 
-from classes.models import Class
-from years.models import Year
+from terms.models import Term
 from .serializers import CreateSequenceSerializer, GetSequenceSerializer
 from ..models import Sequence
 
@@ -17,39 +16,34 @@ from ..models import Sequence
 @api_view(http_method_names=['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def create_sequence(request):
+def create_sequence(request, term_id):
 
     if Sequence.objects.filter(is_active=True).exists():
-        msg = "You can not create an new sequence while another is active."
+        msg = "You can not create a new sequence while another is active."
         return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    active_year = Year.objects.get(is_active=True)
-    active_classes = active_year.class_set.all()
+    try:
+        term = Term.objects.get(pk=term_id)
+    except Term.DoesNotExist:
+        msg = "Term not found."
+        return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
 
-    if active_classes.count() < 1:
-        msg = f"There are no classes for the current active year. Please create classes first."
+    if not term.is_active:
+        msg = "You can not create a new sequence while another is active."
         return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-    else:
-        serializer = CreateSequenceSerializer(data=request.data)
-        if serializer.is_valid():
 
-            name = serializer.validated_data['name']
+    if not term.year.is_active:
+        msg = "You can not create a new sequence the current active year."
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-            if Sequence.objects.filter(name=name, sequence_class__year__is_active=True, is_active=True).exists():
-                msg = f"{name} for all forms created already."
-                return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    serializer = CreateSequenceSerializer(data=request.data)
+    if serializer.is_valid():
+        name = serializer.validated_data.get('name')
+        sequence = serializer.save(term=term)
+        response_serializer = GetSequenceSerializer(sequence)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-            for sequence_class in active_classes:
-                Sequence.objects.create(
-                    name=name, sequence_class=sequence_class)
-
-            sequences = Sequence.objects.filter(
-                sequence_class__year__is_active=True)
-            response_serializer = GetSequenceSerializer(sequences, many=True)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(http_method_names=['GET'])
@@ -75,63 +69,73 @@ def get_sequences(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@api_view(http_method_names=['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def get_sequences_term(request, term_id):
+    try:
+        term = Term.objects.get(pk=term_id)
+    except Term.DoesNotExist:
+        msg = "Term not found."
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    sequences = term.sequence_set.all()
+    serializer = GetSequenceSerializer(sequences, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @api_view(http_method_names=['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def delete_sequence(request):
-
-    sequences = Sequence.objects.filter(is_active=True)
-
-    if sequences.count() < 1:
+def delete_sequence(request, sequence_id):
+    try:
+        sequence = Sequence.objects.get(pk=sequence_id)
+    except Sequence.DoesNotExist:
         msg = f'Sequence not found.'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
-    for sequence in sequences:
+    if not sequence.is_active:
+        msg = "You can only delete active sequences."
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        if not sequence.sequence_class.year.is_active:
-            msg = f"You can not delete a sequence in an active year."
-            return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        else:
-            if not sequence.is_active:
-                msg = 'You can not delete an inactive sequence.'
-                return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    if not sequence.term.year.is_active:
+        msg = "You can only delete sequences in the current active year."
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-            sequence.delete()
-
+    sequence.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(http_method_names=['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def update_sequence(request):
-
-    sequences = Sequence.objects.filter(is_active=True)
-
-    if sequences.count() < 1:
-        msg = f'Sequence not found.'
+def update_sequence(request, term_id):
+    try:
+        sequence = Sequence.objects.get(is_active=True)
+    except Sequence.DoesNotExist:
+        msg = 'Sequence not found'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = CreateSequenceSerializer(data=request.data)
+    try:
+        term = Term.objects.get(pk=term_id)
+    except Term.DoesNotExist:
+        msg = "Term not found."
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    if not term.is_active:
+        msg = "You can not update a sequence in an inactive term."
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    if not term.year.is_active:
+        msg = "You can not update a sequence in an inactive year."
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    serializer = CreateSequenceSerializer(sequence, data=request.data)
     if serializer.is_valid():
+        updated_sequence = serializer.save(term=term)
+        return Response(GetSequenceSerializer(updated_sequence).data)
 
-        name = serializer.validated_data.get('name')
-
-        if Sequence.objects.filter(name=name, sequence_class__year__is_active=True).exists():
-            msg = f"{name} already exists."
-            return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        else:
-            for sequence in sequences:
-                sequence.name = name
-                sequence.save()
-
-        sequences = Sequence.objects.all()
-        response_serializer = GetSequenceSerializer(sequences, many=True)
-
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(http_method_names=['PUT'])
@@ -139,24 +143,25 @@ def update_sequence(request):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def deactivate_sequence(request):
 
-    sequences = Sequence.objects.filter(is_active=True)
-
-    if sequences.count() < 1:
-        msg = f'Sequence not found.'
+    try:
+        sequence = Sequence.objects.get(is_active=True)
+    except Sequence.DoesNotExist:
+        msg = 'Sequence not found'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
-    for sequence in sequences:
+    if not sequence.is_active:
+        msg = 'You can only deactivate an active sequence.'
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        if not sequence.sequence_class.year.is_active:
-            msg = f"You can only deactivate a sequence in an active year."
-            return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        else:
+    if not sequence.term.is_active:
+        msg = 'You can only deactivate a sequence in an active term.'
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-            if not sequence.is_active:
-                msg = 'You can only deactivate an active sequence.'
-                return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    if not sequence.term.year.is_active:
+        msg = 'You can only deactivate a sequence in an active year.'
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-            sequence.is_active = False
-            sequence.save()
+    sequence.is_active = False
+    sequence.save()
 
     return Response(status=status.HTTP_204_NO_CONTENT)
