@@ -1,4 +1,4 @@
-
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from knox.auth import TokenAuthentication
 
+from classes.models import Class
 from teachers.models import Teacher
 from students.models import Student
 from subjects.models import Subject
@@ -35,6 +36,10 @@ def create_mark(request, student_id, subject_id):
 
     if not subject.subject_class.year.is_active:
         msg = 'You can only fill marks for subjects in the active year.'
+        return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
+
+    if not subject in student.student_class.subject_set.all():
+        msg = 'The student does not belong to that class'
         return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
 
     teachers = subject.teachers.all()
@@ -93,3 +98,28 @@ def get_marks_for_student(request, student_id):
         data.get('scores').append(d)
 
     return Response(data)
+
+
+@api_view(http_method_names=['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def get_all_marks_for_students_in_class(request, class_id):
+    class_obj = get_object_or_404(Class, pk=class_id)
+
+    students = class_obj.student_set.all()
+    marks = []
+    for student in students:
+        details = {
+            'student_details': {'mat': student.student_id, 'name': student.name},
+            'score_details': []
+        }
+        student_marks = student.mark_set.all()
+        for mark in student_marks:
+            d = {
+                'subject': mark.subject.name,
+                'value': mark.value,
+                'taught_by': mark.teacher.get_full_name(),
+            }
+            details['score_details'].append(d)
+        marks.append(details)
+    return Response(marks)
