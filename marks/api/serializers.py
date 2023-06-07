@@ -9,6 +9,7 @@ class GetMarkSerializer(serializers.ModelSerializer):
     student = serializers.SerializerMethodField()
     subject = serializers.SerializerMethodField()
     class_name = serializers.SerializerMethodField()
+    sequence = serializers.SerializerMethodField()
 
     def get_teacher(self, mark):
         return mark.teacher.get_full_name()
@@ -21,6 +22,9 @@ class GetMarkSerializer(serializers.ModelSerializer):
 
     def get_subject(self, mark):
         return mark.subject.name
+
+    def get_sequence(self, mark):
+        return mark.sequence.name
 
     class Meta:
         model = Mark

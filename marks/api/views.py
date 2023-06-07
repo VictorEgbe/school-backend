@@ -13,6 +13,7 @@ from classes.models import Class
 from teachers.models import Teacher
 from students.models import Student
 from subjects.models import Subject
+from sequences.models import Sequence
 
 from .serializers import GetMarkSerializer, CreateMarkSerializer
 from ..models import Mark
@@ -42,20 +43,31 @@ def create_mark(request, student_id, subject_id):
         msg = 'The student does not belong to that class'
         return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
 
+    try:
+        sequence = Sequence.objects.get(is_active=True)
+    except Sequence.DoesNotExist:
+        msg = 'There are no active sequence at this moment. Please contact the admin.'
+        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    if not sequence.term.year.is_active:
+        msg = 'You can only submit marks for an active year.'
+        return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
+
     teachers = subject.teachers.all()
     teacher_teaches_subject = request.user.id in [t.id for t in teachers]
 
     if teacher_teaches_subject or request.user.is_superuser:
         serializer = CreateMarkSerializer(data=request.data)
         if serializer.is_valid():
-            if Mark.objects.filter(student=student, subject=subject).exists():
-                msg = f'Marks already filled for {student.name} in {subject.name}'
+            if Mark.objects.filter(student=student, subject=subject, sequence=sequence).exists():
+                msg = f'Marks already filled for {student.name} in {subject.name} in {sequence.name}'
                 return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
             else:
                 if request.user.is_superuser:
                     mark = serializer.save(
                         subject=subject,
                         student=student,
+                        sequence=sequence,
                         teacher=teachers.first(),
                         value=serializer.validated_data.get('value')
                     )
@@ -64,6 +76,7 @@ def create_mark(request, student_id, subject_id):
                     mark = serializer.save(
                         subject=subject,
                         student=student,
+                        sequence=sequence,
                         teacher=teacher,
                         is_filled=True,
                         value=serializer.validated_data.get('value')
@@ -91,6 +104,7 @@ def get_marks_for_student(request, student_id):
     data = {'student': student.name, 'scores': []}
     for mark in marks:
         d = {
+            'sequence': mark.sequence.name,
             'subject': mark.subject.name,
             'value': mark.value,
             'taught_by': mark.teacher.get_full_name(),
@@ -123,3 +137,28 @@ def get_all_marks_for_students_in_class(request, class_id):
             details['score_details'].append(d)
         marks.append(details)
     return Response(marks)
+
+
+@api_view(http_method_names=['PUT'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def update_mark(request, mark_id):
+    try:
+        mark = Mark.objects.get(pk=mark_id)
+    except Mark.DoesNotExist:
+        msg = 'The mark you want to update was not found.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    teachers = mark.subject.teachers.all()
+    teacher_teaches_subject = request.user.id in [t.id for t in teachers]
+
+    if teacher_teaches_subject or request.user.is_superuser:
+        serializer = CreateMarkSerializer(mark, data=request.data)
+
+        if serializer.is_valid():
+            updated_mark = serializer.save()
+            return Response(GetMarkSerializer(updated_mark).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        msg = 'You can only fill marks for a subject you teach.'
+        return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
