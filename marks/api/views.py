@@ -15,14 +15,14 @@ from students.models import Student
 from subjects.models import Subject
 from sequences.models import Sequence
 
-from .serializers import GetMarkSerializer, CreateMarkSerializer
+from .serializers import GetMarkSerializer, CreateMarkSerializer, CreateOrUpdateMarkSerializer
 from ..models import Mark
 
 
 @api_view(http_method_names=['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
-def create_mark(request, student_id, subject_id):
+def create_or_update_mark(request, class_id, subject_id):
     try:
         subject = Subject.objects.get(pk=subject_id)
     except Subject.DoesNotExist:
@@ -30,16 +30,16 @@ def create_mark(request, student_id, subject_id):
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
     try:
-        student = Student.objects.get(student_id=student_id)
-    except Student.DoesNotExist:
-        msg = 'Student not found'
+        _class = Class.objects.get(pk=class_id)
+    except Class.DoesNotExist:
+        msg = 'Class not found'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
     if not subject.subject_class.year.is_active:
         msg = 'You can only fill marks for subjects in the active year.'
         return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
 
-    if not subject in student.student_class.subject_set.all():
+    if not subject in _class.subject_set.all():
         msg = 'The student does not belong to that class'
         return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
 
@@ -57,32 +57,63 @@ def create_mark(request, student_id, subject_id):
     teacher_teaches_subject = request.user.id in [t.id for t in teachers]
 
     if teacher_teaches_subject or request.user.is_superuser:
-        serializer = CreateMarkSerializer(data=request.data)
+        serializer = CreateOrUpdateMarkSerializer(data=request.data)
         if serializer.is_valid():
-            if Mark.objects.filter(student=student, subject=subject, sequence=sequence).exists():
-                msg = f'Marks already filled for {student.name} in {subject.name} in {sequence.name}'
-                return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            else:
-                if request.user.is_superuser:
-                    mark = serializer.save(
-                        subject=subject,
-                        student=student,
-                        sequence=sequence,
-                        teacher=teachers.first(),
-                        value=serializer.validated_data.get('value')
-                    )
-                else:
-                    teacher = Teacher.objects.get(pk=request.user.pk)
-                    mark = serializer.save(
-                        subject=subject,
-                        student=student,
-                        sequence=sequence,
-                        teacher=teacher,
-                        is_filled=True,
-                        value=serializer.validated_data.get('value')
-                    )
-                response_serializer = GetMarkSerializer(mark)
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            class_list = serializer.validated_data['class_list']
+
+            for student_info in class_list:
+
+                student_id = student_info['student_id']
+                subject_score = student_info['value']
+
+                try:
+                    float(subject_score)
+                except (ValueError, TypeError):
+                    msg = f'"{subject_score}" is not a valid score...'
+                    return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
+
+                if float(subject_score) < 0 or float(subject_score) > 20:
+                    msg = f'{subject_score} is not a valid score.'
+                    return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
+
+                if len(str(float(subject_score)).split('.')[1]) > 2:
+                    msg = f'{subject_score} is not a valid score.Too many decimal digits.'
+                    return Response({'error': msg}, status=status.HTTP_403_FORBIDDEN)
+
+                try:
+                    student = Student.objects.get(student_id=student_id)
+                except Student.DoesNotExist:
+                    msg = 'Student not found'
+                    return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+                try:
+                    mark = Mark.objects.get(
+                        student=student, subject=subject, sequence=sequence)
+                    mark.value = subject_score
+                    mark.save()
+
+                except Mark.DoesNotExist:
+                    if request.user.is_superuser:
+                        mark = Mark.objects.create(
+                            subject=subject,
+                            student=student,
+                            sequence=sequence,
+                            teacher=teachers.first(),
+                            value=subject_score,
+                            is_filled=True,
+                        )
+                    else:
+                        teacher = Teacher.objects.get(pk=request.user.pk)
+                        Mark.objects.create(
+                            subject=subject,
+                            student=student,
+                            sequence=sequence,
+                            teacher=teacher,
+                            is_filled=True,
+                            value=subject_score
+                        )
+
+            return Response(status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:

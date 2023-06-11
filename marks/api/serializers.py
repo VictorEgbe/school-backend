@@ -36,3 +36,18 @@ class CreateMarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mark
         fields = ['value']
+
+
+class MarkDictField(serializers.DictField):
+    child = serializers.CharField()
+
+
+class MarkListField(serializers.ListField):
+    child = MarkDictField(allow_empty=False)
+
+
+class CreateOrUpdateMarkSerializer(serializers.Serializer):
+    '''class_list should be with two keys: student_id and subject_score'''
+    '''e.g {"student_id": "QIS3452", "subject_score": 12.5}'''
+
+    class_list = MarkListField(allow_empty=False)

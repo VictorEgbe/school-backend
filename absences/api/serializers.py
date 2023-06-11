@@ -11,7 +11,7 @@ class AbsenceListField(serializers.ListField):
 
 class CreateOrUpdateAbsentSerializer(serializers.Serializer):
 
-    '''class_list should be with two keys: student_id and is_absent'''
+    '''class_list should be with three keys: student_id, is_absent and reason'''
     '''eg {"student_id": "QIS3452", "is_absent": "false", "reason":"Sickness"}'''
 
     class_list = AbsenceListField(allow_empty=False)
