@@ -40,6 +40,7 @@ class Student(models.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'student_id': self.student_id,
             'student_class': self.student_class.name,
             'date_of_birth': self.date_of_birth,
             'gender': self.gender,
@@ -51,3 +52,6 @@ class Student(models.Model):
             'updated_at': self.updated_at,
             'age': self.get_age(),
         }
+
+    class Meta:
+        ordering = ['name']

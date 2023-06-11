@@ -4,6 +4,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path('api/accounts/', include('accounts.api.urls')),
+    path('api/absences/', include('absences.api.urls')),
     path('api/classes/', include('classes.api.urls')),
     path('api/departments/', include('departments.api.urls')),
     path('api/marks/', include('marks.api.urls')),
