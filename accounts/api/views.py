@@ -128,3 +128,10 @@ def delete_user(request, user_id):
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     user.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(http_method_names=['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def load_user(request):
+    return Response(request.user.get_response_data())
