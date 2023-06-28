@@ -57,7 +57,7 @@ class User(AbstractUser):
             'gender': self.gender,
             'image': self.image.url if self.image else None,
             'username': self.username,
-            'is_staff': self.is_staff,
+            'is_admin': self.is_staff,
             'email': self.email,
             'created_at': self.created_at
         }
