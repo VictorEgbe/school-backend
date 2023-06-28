@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'departments.apps.DepartmentsConfig',
     'teachers.apps.TeachersConfig',
     'absences.apps.AbsencesConfig',
+    'others.apps.OthersConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
