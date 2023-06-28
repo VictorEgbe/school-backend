@@ -52,14 +52,14 @@ class User(AbstractUser):
     def get_response_data(self):
         return {
             'id': self.id,
-            'full_name': self.get_full_name(),
+            'fullName': self.get_full_name(),
             'phone': self.phone.as_national,
             'gender': self.gender,
             'image': self.image.url if self.image else None,
             'username': self.username,
-            'is_admin': self.is_staff,
+            'isAdmin': self.is_staff,
             'email': self.email,
-            'created_at': self.created_at
+            'createdAt': self.created_at
         }
 
 

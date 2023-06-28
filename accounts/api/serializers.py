@@ -61,7 +61,7 @@ class SignInSerializer(serializers.Serializer):
         user = authenticate(request=self.context.get(
             'request'), phone=phone, password=password)
         if not user or (not user.is_active):
-            msg = 'Wrong phone number or password'
+            msg = 'Wrong phone number or password.'
             raise serializers.ValidationError(msg, code='authorization')
         attrs['user'] = user
         return attrs
