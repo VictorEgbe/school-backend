@@ -54,6 +54,7 @@ def dashboard(request):
         name = department.name
         number_of_teachers = department.teacher_set.count()
         data = {'name': name, 'numberOfTeachers': number_of_teachers}
+        departments_info.append(data)
 
     response_data = {
         'currentYear': current_year.name,
