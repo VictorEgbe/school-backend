@@ -49,13 +49,18 @@ class User(AbstractUser):
     def __str__(self):
         return self.get_full_name()
 
+    def get_image_url(self):
+        if self.image:
+            return self.image.url
+        return None
+
     def get_response_data(self):
         return {
             'id': self.id,
             'fullName': self.get_full_name(),
             'phone': self.phone.as_national,
             'gender': self.gender,
-            'image': self.image.url if self.image else None,
+            'image': self.get_image_url(),
             'username': self.username,
             'isAdmin': self.is_staff,
             'email': self.email,

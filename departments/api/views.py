@@ -41,10 +41,27 @@ def get_department(request, department_id):
 @api_view(http_method_names=['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def get_all_departments(request):
+def get_all_departments_info(request):
     departments = Department.objects.all()
-    serializer = GetDepartmentSerializer(departments, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    response_data = []
+    for department in departments:
+        teachers = department.teacher_set.all()
+        data = {
+            'id': department.pk,
+            'name': department.name,
+            'teachers': [],
+            'numberOfTeachers': teachers.count()
+        }
+        for teacher in teachers:
+            teacher_info = {
+                'id': teacher.pk,
+                'fullName': teacher.get_full_name(),
+                'image': teacher.get_image_url()
+            }
+            data['teachers'].append(teacher_info)
+        response_data.append(data)
+
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['DELETE'])
