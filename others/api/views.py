@@ -40,8 +40,9 @@ def dashboard(request):
     teachers = Teacher.objects.count()
     departments = Department.objects.count()
     admins = User.objects.filter(is_staff=True)
+    classes = Class.objects.filter(year=current_year)
     class_students = []
-    for _class in Class.objects.filter(year=current_year):
+    for _class in classes:
         total_students_in_class = _class.student_set.all()
         boys = total_students_in_class.filter(gender='Male').count()
         girls = total_students_in_class.filter(gender='Female').count()
@@ -65,7 +66,8 @@ def dashboard(request):
         'admins': admins.count(),
         'departments': departments,
         'classStudents': class_students,
-        'departmentsInfo': departments_info
+        'departmentsInfo': departments_info,
+        'classes': classes.count()
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
