@@ -38,8 +38,12 @@ def get_department(request, department_id):
     department_teachers = department.teacher_set.all()
     teachers_data = []
     for teacher in department_teachers:
-        info = {'id': teacher.id, 'name': teacher.get_full_name(),
-                'image': teacher.get_image_url()}
+        info = {
+            'id': teacher.id,
+            'name': teacher.get_full_name(),
+            'image': teacher.get_image_url(),
+            'isHOD': teacher.is_hod
+        }
         teachers_data.append(info)
 
     response_data = {
@@ -103,8 +107,36 @@ def update_department(request, department_id):
     serializer = CreateDepartmentSerializer(department, data=request.data)
 
     if serializer.is_valid():
+        if serializer.validated_data.get('HOD_name'):
+            new_HOD_name = serializer.validated_data.get('HOD_name')
+            department_teachers = department.teacher_set.all()
+            for t in department_teachers:
+                t.is_hod = False
+                t.save()
+
+            HOD = [t for t in department_teachers if t.get_full_name() ==
+                   new_HOD_name][0]
+            HOD.is_hod = True
+            HOD.save()
+
         new_department = serializer.save()
-        return Response(GetDepartmentSerializer(new_department).data)
+        new_serializer = GetDepartmentSerializer(new_department)
+        department_teachers = new_department.teacher_set.all()
+        teachers_data = []
+        for teacher in department_teachers:
+            info = {
+                'id': teacher.id,
+                'name': teacher.get_full_name(),
+                'image': teacher.get_image_url(),
+                'isHOD': teacher.is_hod
+            }
+            teachers_data.append(info)
+
+        response_data = {
+            'department': new_serializer.data,
+            'teachers': teachers_data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

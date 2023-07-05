@@ -22,3 +22,6 @@ class Teacher(User):
             current_year = date.today().year
             return current_year - year_of_birth
         return None
+
+    class Meta:
+        ordering = ('-is_hod', )
