@@ -35,7 +35,18 @@ def get_department(request, department_id):
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = GetDepartmentSerializer(department)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    department_teachers = department.teacher_set.all()
+    teachers_data = []
+    for teacher in department_teachers:
+        info = {'id': teacher.id, 'name': teacher.get_full_name(),
+                'image': teacher.get_image_url()}
+        teachers_data.append(info)
+
+    response_data = {
+        'department': serializer.data,
+        'teachers': teachers_data
+    }
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['GET'])
