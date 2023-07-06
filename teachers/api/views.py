@@ -11,10 +11,11 @@ from knox.auth import TokenAuthentication
 from departments.models import Department
 
 from .serializers import (
-    GetTeacherSerializer,
     CreateTeacherSerializer,
+    GetTeacherSerializer,
+    GetAllTeachersSerializer,
     UpdateTeacherSerializer,
-    TeacherChangePasswordSerializer
+    TeacherChangePasswordSerializer,
 )
 from ..models import Teacher
 
@@ -68,7 +69,7 @@ def create_teacher(request, department_id):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def get_all_teachers(request):
     teachers = Teacher.objects.all()
-    serializer = GetTeacherSerializer(teachers, many=True)
+    serializer = GetAllTeachersSerializer(teachers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 

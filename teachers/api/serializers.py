@@ -3,11 +3,41 @@ from rest_framework import serializers
 from ..models import Teacher
 
 
+class GetAllTeachersSerializer(serializers.ModelSerializer):
+    fullName = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
+    isHOD = serializers.SerializerMethodField()
+
+    def get_image(self, teacher):
+        return teacher.get_image_url()
+
+    def get_fullName(self, teacher):
+        return teacher.get_full_name()
+
+    def get_department(self, teacher):
+        return teacher.department.name
+
+    def get_isHOD(self, teacher):
+        return teacher.is_hod
+
+    class Meta:
+        model = Teacher
+        fields = (
+            'id',
+            'fullName',
+            'image',
+            'department',
+            'isHOD'
+        )
+
+
 class GetTeacherSerializer(serializers.ModelSerializer):
 
     department = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     def get_department(self, teacher):
         return teacher.department.name
@@ -18,9 +48,12 @@ class GetTeacherSerializer(serializers.ModelSerializer):
     def get_full_name(self, teacher):
         return teacher.get_full_name()
 
+    def get_image(self, teacher):
+        return teacher.get_image_url()
+
     class Meta:
         model = Teacher
-        fields = [
+        fields = (
             'id',
             'phone',
             'username',
@@ -34,7 +67,7 @@ class GetTeacherSerializer(serializers.ModelSerializer):
             'department',
             'age',
             'full_name'
-        ]
+        )
 
 
 class CreateTeacherSerializer(serializers.ModelSerializer):
@@ -63,7 +96,7 @@ class UpdateTeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = [
+        fields = (
             'phone',
             'username',
             'first_name',
@@ -73,7 +106,7 @@ class UpdateTeacherSerializer(serializers.ModelSerializer):
             'image',
             'address',
             'date_of_birth'
-        ]
+        )
 
 
 class TeacherChangePasswordSerializer(serializers.Serializer):
