@@ -71,7 +71,8 @@ def get_all_departments_info(request):
             teacher_info = {
                 'id': teacher.pk,
                 'fullName': teacher.get_full_name(),
-                'image': teacher.get_image_url()
+                'image': teacher.get_image_url(),
+                'isHOD': teacher.is_hod
             }
             data['teachers'].append(teacher_info)
         response_data.append(data)
