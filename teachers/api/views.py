@@ -84,7 +84,33 @@ def get_teacher(request, teacher_id):
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = GetTeacherSerializer(teacher)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+
+    classes = []
+
+    for subject in teacher.subject_set.all():
+        subject_info = {
+            'NameOfClass': subject.subject_class.name,
+            'subjectTaught': subject.name
+        }
+        classes.append(subject_info)
+
+    teachers_of_same_department = []
+    for t in Teacher.objects.filter(department=teacher.department).exclude(pk=teacher.pk):
+        t_info = {
+            'id': t.pk,
+            'name': t.get_full_name(),
+            'isHOD': t.is_hod,
+            'image': t.get_image_url()
+        }
+        teachers_of_same_department.append(t_info)
+
+    response_data = {
+        'teacherInfo': serializer.data,
+        'classes': classes,
+        'similarTeachers': teachers_of_same_department
+    }
+
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['DELETE'])

@@ -38,6 +38,7 @@ class GetTeacherSerializer(serializers.ModelSerializer):
     age = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    isHOD = serializers.SerializerMethodField()
 
     def get_department(self, teacher):
         return teacher.department.name
@@ -50,6 +51,9 @@ class GetTeacherSerializer(serializers.ModelSerializer):
 
     def get_image(self, teacher):
         return teacher.get_image_url()
+
+    def get_isHOD(self, teacher):
+        return teacher.is_hod
 
     class Meta:
         model = Teacher
@@ -66,7 +70,8 @@ class GetTeacherSerializer(serializers.ModelSerializer):
             'date_of_birth',
             'department',
             'age',
-            'full_name'
+            'full_name',
+            'isHOD'
         )
 
 
