@@ -71,3 +71,19 @@ def dashboard(request):
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(http_method_names=('GET',))
+@permission_classes((IsAuthenticated, IsAdminUser))
+@authentication_classes((TokenAuthentication, ))
+def get_departments_ids_and_names(request):
+    departments = Department.objects.all()
+    response_data = [
+        {
+            'id': department.id,
+            'name': department.name
+        }
+        for department in departments
+    ]
+
+    return Response(response_data, status=status.HTTP_200_OK)
