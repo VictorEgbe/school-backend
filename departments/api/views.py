@@ -108,17 +108,21 @@ def update_department(request, department_id):
     serializer = CreateDepartmentSerializer(department, data=request.data)
 
     if serializer.is_valid():
-        if serializer.validated_data.get('HOD_name'):
-            new_HOD_name = serializer.validated_data.get('HOD_name')
+        if serializer.validated_data.get('hod_id'):
+            new_hod_id = serializer.validated_data.get('hod_id')
             department_teachers = department.teacher_set.all()
+            try:
+                new_hod = department_teachers.get(pk=new_hod_id)
+            except:
+                msg = f'Teacher not found.'
+                return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
             for t in department_teachers:
                 t.is_hod = False
                 t.save()
 
-            HOD = [t for t in department_teachers if t.get_full_name() ==
-                   new_HOD_name][0]
-            HOD.is_hod = True
-            HOD.save()
+            new_hod.is_hod = True
+            new_hod.save()
 
         new_department = serializer.save()
         new_serializer = GetDepartmentSerializer(new_department)
