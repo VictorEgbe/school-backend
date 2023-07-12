@@ -13,7 +13,7 @@ GENDER = (
 
 
 def upload_location(instance, filename):
-    return f'users/photos/{instance.get_full_name()}/{filename}'
+    return f'accounts/{instance.get_full_name()}-{filename}'
 
 
 class User(AbstractUser):

@@ -12,7 +12,7 @@ GENDER = (
 
 
 def upload_location(instance, filename):
-    return f'students/{instance.name}/{filename}'
+    return f'students/{instance.name}-{filename}'
 
 
 class Student(models.Model):

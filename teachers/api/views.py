@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from knox.auth import TokenAuthentication
 
+from accounts.models import User
 from departments.models import Department
 
 from .serializers import (
@@ -123,7 +124,11 @@ def delete_teacher(request, teacher_id):
         msg = 'Teacher not found.'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
+    account = User.objects.get(pk=teacher.pk)
     teacher.delete()
+    if account:
+        account.delete()
+
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
