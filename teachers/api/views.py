@@ -170,9 +170,9 @@ def teacher_password_change(request, teacher_id):
     serializer = TeacherChangePasswordSerializer(data=request.data)
 
     if serializer.is_valid():
-        password = serializer.validated_data.get('password')
+        password = serializer.validated_data.get('password1')
         teacher.set_password(password)
         teacher.save()
-        return Response(GetTeacherSerializer(teacher).data)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

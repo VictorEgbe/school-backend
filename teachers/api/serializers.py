@@ -118,14 +118,15 @@ class UpdateTeacherSerializer(serializers.ModelSerializer):
 
 
 class TeacherChangePasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(
+    password1 = serializers.CharField(
         style={'input_type': 'password'}, write_only=True)
-    password_confirm = serializers.CharField(
+    password2 = serializers.CharField(
         style={'input_type': 'password'}, write_only=True)
 
-    def validate_password(self, password):
-        password_confirm = self.initial_data.get('password_confirm')
-        if not password == password_confirm:
+    def validate_password1(self, password1):
+        password2 = self.initial_data.get('password2')
+        if password1 != password2:
             msg = 'Passwords must match'
             raise serializers.ValidationError(msg)
-        return password
+        else:
+            return password1

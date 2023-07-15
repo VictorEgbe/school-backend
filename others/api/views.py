@@ -21,7 +21,7 @@ def dashboard(request):
     try:
         current_year = Year.objects.get(is_active=True)
     except Year.DoesNotExist:
-        msg = 'There is no information at this moment.'
+        msg = 'You have not created an active year yet.'
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
 
     try:
