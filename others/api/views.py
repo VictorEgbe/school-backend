@@ -87,3 +87,32 @@ def get_departments_ids_and_names(request):
     ]
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(http_method_names=('GET',))
+@permission_classes((IsAuthenticated, IsAdminUser))
+@authentication_classes((TokenAuthentication, ))
+def get_teacher_update_info(request, teacher_id):
+    try:
+        teacher = Teacher.objects.get(pk=teacher_id)
+    except Teacher.DoesNotExist:
+        msg = 'Teacher not found'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
+    response_info = {
+        'first_name': teacher.first_name,
+        'last_name': teacher.last_name,
+        'phone': teacher.phone.as_national,
+        'username': teacher.username,
+        'address': teacher.address,
+        'email': teacher.email,
+        'date_of_birth': teacher.date_of_birth,
+        'image': teacher.get_image_url(),
+        'gender': teacher.gender,
+        'department': {
+            'id': teacher.department.pk,
+            'name': teacher.department.name
+        }
+    }
+
+    return Response(response_info, status=status.HTTP_200_OK)

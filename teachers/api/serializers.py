@@ -41,7 +41,10 @@ class GetTeacherSerializer(serializers.ModelSerializer):
     isHOD = serializers.SerializerMethodField()
 
     def get_department(self, teacher):
-        return teacher.department.name
+        return {
+            'id': teacher.department.id,
+            'name': teacher.department.name,
+        }
 
     def get_age(self, teacher):
         return teacher.get_age()
