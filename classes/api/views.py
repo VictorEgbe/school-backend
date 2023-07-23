@@ -59,9 +59,27 @@ def get_class(request, class_id):
 @permission_classes([IsAdminUser, IsAuthenticated])
 @authentication_classes([TokenAuthentication])
 def get_classes(request):
+    try:
+        current_year = Year.objects.get(is_active=True)
+    except Year.DoesNotExist:
+        msg = 'No current active year.'
+        return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
+
     classes = Class.objects.all()
-    serializer = GetClassSerializer(classes, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    response_data = {'current_year': current_year.name, 'classes': []}
+    for c in classes:
+        students = c.student_set.all()
+        boys = students.filter(gender='Male').count()
+        girls = students.filter(gender='Female').count()
+        data = {
+            'id': c.pk,
+            'name': c.name,
+            'boys': boys,
+            'girls': girls,
+            'total': students.count()
+        }
+        response_data['classes'].append(data)
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['DELETE'])
