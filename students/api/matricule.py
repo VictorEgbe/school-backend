@@ -1,3 +1,10 @@
+# def generate_student_ids(prefix, start, count):
+#     return [f"{prefix}{i:05}" for i in range(start, start + count)]
+
+# # Usage
+# student_ids = generate_student_ids("STU", 1, 100)
+# print(student_ids)
+
 from random import randrange
 
 

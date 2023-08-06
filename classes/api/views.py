@@ -16,23 +16,19 @@ from ..models import Class
 @api_view(http_method_names=['POST'])
 @permission_classes([IsAdminUser, IsAuthenticated])
 @authentication_classes([TokenAuthentication])
-def create_class(request, year_id):
+def create_class(request):
     try:
-        year = Year.objects.get(pk=year_id)
+        year = Year.objects.get(is_active=True)
     except Year.DoesNotExist:
-        msg = "Year not found. You can't assign a class to an unknown year."
+        msg = "No active year created yet."
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
-
-    if not year.is_active:
-        msg = "You can't assign a class to an inactive year."
-        return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     serializer = CreateClassSerializer(data=request.data)
 
     if serializer.is_valid():
         name = serializer.validated_data['name']
         if Class.objects.filter(name=name, year=year).exists():
-            msg = f'{name} already exists for the year {year.name}.'
+            msg = f'{name} already exists for the year {year.name}'
             return Response({'error': msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
             created_class = serializer.save(year=year)
