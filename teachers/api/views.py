@@ -151,6 +151,12 @@ def update_teacher(request, teacher_id, new_department_id):
     serializer = UpdateTeacherSerializer(teacher, data=request.data)
 
     if serializer.is_valid():
+        image = serializer.validated_data.get('image')
+        if image:   # Means the image is about to be updated
+            if teacher.image:
+                '''Delete the old image'''
+                teacher.image.delete()
+                teacher.save()
         updated_teacher = serializer.save(department=new_department)
         return Response(GetTeacherSerializer(updated_teacher).data)
     else:
