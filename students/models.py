@@ -25,6 +25,7 @@ class Student(models.Model):
     student_phone = PhoneNumberField(null=True, blank=True, unique=True)
     parent_name = models.CharField(max_length=100, null=True, blank=True)
     parent_phone = PhoneNumberField()
+    is_prefect = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -32,6 +33,9 @@ class Student(models.Model):
         year_of_birth = self.date_of_birth.year
         current_year = datetime.now().year
         return current_year - year_of_birth
+
+    def get_image_url(self):
+        return self.image.url if self.image else None
 
     def __str__(self):
         return f'{self.name} ({self.student_id})'
@@ -44,7 +48,7 @@ class Student(models.Model):
             'student_class': self.student_class.name,
             'date_of_birth': self.date_of_birth,
             'gender': self.gender,
-            'image': self.image.url if self.image else None,
+            'image': self.get_image_url(),
             'student_phone': self.student_phone.as_national if self.student_phone else None,
             'parent_name': self.parent_name,
             'parent_phone': self.parent_phone.as_national,

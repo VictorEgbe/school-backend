@@ -47,8 +47,56 @@ def get_class(request, class_id):
     except Class.DoesNotExist:
         msg = "Class not found."
         return Response({'error': msg}, status=status.HTTP_404_NOT_FOUND)
-    serializer = GetClassSerializer(_class)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+
+    class_students = _class.student_set.all()
+
+    enrollment = {
+        'boys': class_students.filter(gender='Male').count(),
+        'girls': class_students.filter(gender='Female').count(),
+        'total': class_students.count()
+    }
+
+    students = []
+    for student in class_students:
+        info = {
+            'id': student.id,
+            'name': student.name,
+            'mat': student.student_id,
+            'image': student.get_image_url()
+        }
+        students.append(info)
+
+    prefects = [
+        {
+            'name': s.name,
+            'image': s.get_image_url()
+        }
+        for s in class_students.filter(is_prefect=True)
+    ]
+
+    if _class.master:
+        master = {
+            "name": _class.master.get_full_name(),
+            "image": _class.master.get_image_url(),
+            "department": _class.master.department.name
+        }
+    else:
+        master = None
+
+    class_basic_info = {
+        'name': _class.name,
+        'year': _class.year.name
+    }
+
+    response_data = {
+        'students': students,
+        'enrollment': enrollment,
+        'info': class_basic_info,
+        'master': master,
+        'prefects': prefects
+    }
+
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(http_method_names=['GET'])
