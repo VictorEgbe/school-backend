@@ -69,19 +69,24 @@ def get_class(request, class_id):
     prefects = [
         {
             'name': s.name,
-            'image': s.get_image_url()
+            'image': s.get_image_url(),
+            "role": 'Class Prefect',
+            'id': s.pk
         }
         for s in class_students.filter(is_prefect=True)
     ]
 
     if _class.master:
-        master = {
-            "name": _class.master.get_full_name(),
-            "image": _class.master.get_image_url(),
-            "department": _class.master.department.name
-        }
+        master = [
+            {
+                "name": _class.master.get_full_name(),
+                "image": _class.master.get_image_url(),
+                "role": 'Class Master',
+                'id': _class.master.pk
+            }
+        ]
     else:
-        master = None
+        master = []
 
     class_basic_info = {
         'name': _class.name,
@@ -92,8 +97,7 @@ def get_class(request, class_id):
         'students': students,
         'enrollment': enrollment,
         'info': class_basic_info,
-        'master': master,
-        'prefects': prefects
+        'authorities': master + prefects
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
